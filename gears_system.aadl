@@ -1,0 +1,131 @@
+package gears_system
+public
+	with Base_Types;
+	Base_Types_Boolean renames data Base_Types::Boolean;
+
+	system digital_part
+		features
+			general_EV: out data port;
+			open_EV: out data port;
+			close_EV: out data port;
+			rectract_EV: out data port;
+			extend_EV: out data port;
+			handle: in data port;
+			maneuvring: out data port;
+			locked_down: out data port;
+			error: out data port;
+			door_closed: in event data port;
+			door_openned: in event data port;
+			gear_extended: in event data port;
+			gear_retracted: in event data port;
+			gear_shock_absorb: in event data port;
+	end digital_part;
+
+	system implementation digital_part.dp1
+		subcomponents
+			dp_mem: memory dp_RAM;
+			dp_proc: processor dp_processor;
+			dps: process dp_software.dps;
+			mbdp: bus mem_bus;
+		connections
+			digital_part_dp1_new_connection: bus access dp_proc.mbus <-> mbdp;
+			digital_part_dp1_new_connection2: bus access dp_mem.mbus <-> mbdp;
+	end digital_part.dp1;
+
+	device electro_valve
+		features
+			hydrolic_in: requires bus access hydrolic_bus;
+			hydrolic_out: requires bus access hydrolic_bus;
+			dp_orders: in data port;
+	end electro_valve;
+
+	device implementation electro_valve.general_EV
+	end electro_valve.general_EV;
+
+	device implementation electro_valve.close_EV
+	end electro_valve.close_EV;
+
+	device implementation electro_valve.retract_EV
+	end electro_valve.retract_EV;
+
+	device implementation electro_valve.extend_EV
+	end electro_valve.extend_EV;
+
+	device implementation electro_valve.open_EV
+	end electro_valve.open_EV;
+
+	thread pilote_interface_thread
+		features
+			maneuvring: out data port Base_Types::Boolean;
+			locked_down: out data port Base_Types::Boolean;
+			error: out data port;
+			door_closed: in event data port;
+			door_openned: in event data port;
+			gear_extended: in event data port;
+			gear_retracted: in event data port;
+			gear_shock_absorb: in event data port;
+	end pilote_interface_thread;
+
+	process dp_software
+	end dp_software;
+
+	device pilote_interface
+		features
+			maneuvring: in data port;
+			locked_down: in data port;
+			error: in data port;
+	end pilote_interface;
+
+	device pilot_command
+		features
+			handle: out event data port;
+	end pilot_command;
+
+	device analogical_switch
+	end analogical_switch;
+
+	device descret_sensor
+		features
+			value: out event data port;
+	end descret_sensor;
+
+	device implementation descret_sensor.door_close_sensor
+	end descret_sensor.door_close_sensor;
+
+	device implementation descret_sensor.door_open_sensor
+	end descret_sensor.door_open_sensor;
+
+	device implementation descret_sensor.gears_extend_sensor
+	end descret_sensor.gears_extend_sensor;
+
+	device implementation descret_sensor.gears_retract_sensor
+	end descret_sensor.gears_retract_sensor;
+
+	device implementation descret_sensor.gear_shock_sensor
+	end descret_sensor.gear_shock_sensor;
+
+	process implementation dp_software.dps
+		subcomponents
+			pit: thread pilote_interface_thread;
+	end dp_software.dps;
+
+	memory dp_RAM
+		features
+			mbus: requires bus access mem_bus;
+	end dp_RAM;
+
+	processor dp_processor
+		features
+			mbus: requires bus access mem_bus;
+	end dp_processor;
+
+	bus mem_bus
+	end mem_bus;
+
+	bus hydrolic_bus
+	end hydrolic_bus;
+
+	bus dp_to_ev_bus
+	end dp_to_ev_bus;
+	
+end gears_system;
