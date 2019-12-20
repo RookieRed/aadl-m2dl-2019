@@ -22,6 +22,14 @@ public
 			Data_Model::Data_Representation => enum;
 			Data_Model::Enumerators => ("up", "down");
 	end handle.imp;
+	
+	data switch_value
+	end switch_value;
+	data implementation switch_value.imp
+		properties
+			Data_Model::Data_Representation => enum;
+			Data_Model::Enumerators => ("closed", "open");
+	end switch_value.imp;
 
 	-- Global Digital part system
 	system digital_part
@@ -31,12 +39,13 @@ public
 			close_EV: out data port Boolean;
 			rectract_EV: out data port Boolean;
 			extend_EV: out data port Boolean;
-			handle: in data port handle.imp;
-			state: in data port handle.imp;
+			handle: in event data port handle.imp;
+			switch_value: in event data port switch_value.imp;
 			maneuvring: out data port Boolean;
 			locked_down: out data port Boolean;
 			error: out data port Boolean;
 			door_closed: in event data port Boolean;
+			hydrolic_presurized: in event data port Boolean;
 			door_openned: in event data port Boolean;
 			gear_extended: in event data port Boolean;
 			gear_retracted: in event data port Boolean;
@@ -60,7 +69,7 @@ public
 	process implementation dp_software.dps
 		subcomponents
 			pit: thread pilote_interface_thread;
-			gmt: thread gears_manager_thread;
+			gmt: thread gears_manager_thread.imp;
 	end dp_software.dps;
 
 	-- Thread pilote interface
@@ -79,14 +88,72 @@ public
 				period=>10ms;
 	end pilote_interface_thread;
 
+	-- Thread Gears Manager
 	thread gears_manager_thread
 		features
+			switch_value: in event data port switch_value.imp;
+			handle: in event data port handle.imp;
+			-- EV
+			general_EV: out data port Boolean;
+			open_EV: out data port Boolean;
+			close_EV: out data port Boolean;
+			rectract_EV: out data port Boolean;
+			extend_EV: out data port Boolean;
+			-- sensors
+			hydrolic_presurized: in event data port Boolean;
 			door_closed: in event data port Boolean;
 			door_openned: in event data port Boolean;
 			gear_extended: in event data port Boolean;
 			gear_retracted: in event data port Boolean;
 			gear_shock_absorb: in event data port shock_absorber.imp;
+			
+		properties
+			Dispatch_Protocol => Sporadic;
+			Period => 10ms; 
 	end gears_manager_thread;
+	
+	thread implementation gears_manager_thread.imp
+		annex behavior_specification {**
+			variables
+				h: handle.imp;	
+				s: switch_value.imp;
+				shock_abs: shock_absorber.imp;
+			states
+				wait_handle: initial complete state;
+				locked_down_ground: complete state;
+				wait_switch: complete state;
+				wait_presurized: complete state;
+				gear_moving: complete state;
+				door_openning: complete state;
+				door_closing: complete state;
+				error: state;
+			transitions
+				wait_handle -[on dispatch handle]-> wait_switch {
+					h := handle
+				};
+				wait_switch -[on dispatch switch_value]-> wait_presurized {
+					general_EV!(true)
+				};
+				wait_presurized -[on dispatch hydrolic_presurized]-> door_openning {
+					open_EV!(true)
+				};
+				door_openning -[on dispatch door_openned]-> gear_moving {
+					if (h = "up") extend_EV!(true)
+					else rectract_EV!(true)
+					end if
+				};
+				gear_moving -[on dispatch gear_extended or gear_retracted]-> door_closing {
+					close_EV!(true)
+				};
+				door_closing  -[on dispatch door_closed]-> wait_handle {
+					if (h = "up") extend_EV!(false)
+					else rectract_EV!(false)
+					end if;
+					close_EV!(false);
+					general_EV!(false)
+				};
+		**};
+	end gears_manager_thread.imp;
 
 	-- Devices
 	device pilote_interface
