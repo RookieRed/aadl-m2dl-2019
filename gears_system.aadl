@@ -74,6 +74,9 @@ public
 			gear_extended: in event data port Boolean;
 			gear_retracted: in event data port Boolean;
 			gear_shock_absorb: in event data port shock_absorber.imp;
+		properties
+				Dispatch_protocol => sporadic;
+				period=>10ms;
 	end pilote_interface_thread;
 
 	thread gears_manager_thread
@@ -165,6 +168,38 @@ public
 	end electro_valve.open_EV;
 
 	thread implementation pilote_interface_thread.pilote_interface
+		subcomponents
+			v: data Base_Types::Boolean {Data_Model::Initial_Value=>("false");};
+			dc: data Base_Types::Boolean {Data_Model::Initial_Value=>("false");};
+			ge: data Base_Types::Boolean {Data_Model::Initial_Value=>("false");};
+			gr: data Base_Types::Boolean {Data_Model::Initial_Value=>("false");};
+		annex behavior_specification {**
+			states
+				s0: initial complete state;
+				
+			transitions
+				-- reveillé si gear_extended, on se met en etat locked_down
+				s0-[on dispatch gear_extended]->s0 {
+					gear_extended?(v);
+					if (v) {
+						locked_down := true
+					}
+					end if
+				};
+				
+				-- reveillé si porte ou roue non-verouillées, on se met en état maneuvring
+				s0-[on dispatch door_closed or gear_extended or gear_retracted]->s0 {
+					door_closed?(dc);
+					gear_extended?(ge);
+					gear_retracted?(gr);
+					
+					if (not dc and not ge and not gr) {
+						maneuvring := true
+					}
+					end if
+				};
+				
+		**};
 	end pilote_interface_thread.pilote_interface;
 	
 end gears_system;
