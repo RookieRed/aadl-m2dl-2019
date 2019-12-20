@@ -68,7 +68,7 @@ public
 	
 	process implementation dp_software.dps
 		subcomponents
-			pit: thread pilote_interface_thread;
+			pit: thread pilote_interface_thread.imp;
 			gmt: thread gears_manager_thread.imp;
 	end dp_software.dps;
 
@@ -87,6 +87,56 @@ public
 				Dispatch_protocol => sporadic;
 				period=>10ms;
 	end pilote_interface_thread;
+
+	thread implementation pilote_interface_thread.imp
+		subcomponents
+			v: data Boolean {Data_Model::Initial_Value=>("false");};
+			dc: data Boolean {Data_Model::Initial_Value=>("false");};
+			ge: data Boolean {Data_Model::Initial_Value=>("false");};
+			gr: data Boolean {Data_Model::Initial_Value=>("false");};
+		annex behavior_specification {**
+			states
+				s0: initial complete state;
+				
+			transitions
+				-- reveillé si gear_extended, on se met en etat locked_down
+				s0-[on dispatch gear_extended]->s0 {
+					gear_extended?(v);
+					locked_down!(v);
+					if (v) { -- on n'a qu'un seul état à la fois
+						maneuvring!(false);
+						error!(false)
+					}
+					end if
+				};
+				
+				-- reveillé si porte ou roue non-verouillées, on se met en état maneuvring
+				s0-[on dispatch door_closed or gear_extended or gear_retracted]->s0 {
+					door_closed?(dc);
+					gear_extended?(ge);
+					gear_retracted?(gr);
+					maneuvring!(not dc and not ge and not gr);
+					if (not dc and not ge and not gr) { -- on n'a qu'un seul état à la fois
+						locked_down!(false);
+						error!(false)
+					}
+					end if
+				};
+				
+				-- reveillé si porte fermée, roue retractée, on n'est ni en maneuvring ni en locked_down
+				s0-[on dispatch door_closed or gear_retracted]->s0 {
+					door_closed?(dc);
+					gear_retracted?(gr);
+					if (dc and gr) { -- on n'a qu'un seul état à la fois
+						locked_down!(false);
+						maneuvring!(false);
+						error!(false)
+					}
+					end if
+				};
+				
+		**};
+		end pilote_interface_thread.imp;
 
 	-- Thread Gears Manager
 	thread gears_manager_thread
@@ -233,55 +283,5 @@ public
 
 	device implementation electro_valve.open_EV
 	end electro_valve.open_EV;
-
-	thread implementation pilote_interface_thread.pilote_interface
-		subcomponents
-			v: data Boolean {Data_Model::Initial_Value=>("false");};
-			dc: data Boolean {Data_Model::Initial_Value=>("false");};
-			ge: data Boolean {Data_Model::Initial_Value=>("false");};
-			gr: data Boolean {Data_Model::Initial_Value=>("false");};
-		annex behavior_specification {**
-			states
-				s0: initial complete state;
-				
-			transitions
-				-- reveillé si gear_extended, on se met en etat locked_down
-				s0-[on dispatch gear_extended]->s0 {
-					gear_extended?(v);
-					locked_down!(v);
-					if (v) { -- on n'a qu'un seul état à la fois
-						maneuvring!(false);
-						error!(false)
-					}
-					end if
-				};
-				
-				-- reveillé si porte ou roue non-verouillées, on se met en état maneuvring
-				s0-[on dispatch door_closed or gear_extended or gear_retracted]->s0 {
-					door_closed?(dc);
-					gear_extended?(ge);
-					gear_retracted?(gr);
-					maneuvring!(not dc and not ge and not gr);
-					if (not dc and not ge and not gr) { -- on n'a qu'un seul état à la fois
-						locked_down!(false);
-						error!(false)
-					}
-					end if
-				};
-				
-				-- reveillé si porte fermée, roue retractée, on n'est ni en maneuvring ni en locked_down
-				s0-[on dispatch door_closed or gear_retracted]->s0 {
-					door_closed?(dc);
-					gear_retracted?(gr);
-					if (dc and gr) { -- on n'a qu'un seul état à la fois
-						locked_down!(false);
-						maneuvring!(false);
-						error!(false)
-					}
-					end if
-				};
-				
-		**};
-	end pilote_interface_thread.pilote_interface;
 	
 end gears_system;
