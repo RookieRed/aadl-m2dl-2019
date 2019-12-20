@@ -248,8 +248,10 @@ public
 				-- reveillé si gear_extended, on se met en etat locked_down
 				s0-[on dispatch gear_extended]->s0 {
 					gear_extended?(v);
-					if (v) {
-						locked_down!(true)
+					locked_down!(v);
+					if (v) { -- on n'a qu'un seul état à la fois
+						maneuvring!(false);
+						error!(false)
 					}
 					end if
 				};
@@ -259,9 +261,22 @@ public
 					door_closed?(dc);
 					gear_extended?(ge);
 					gear_retracted?(gr);
-					
-					if (not dc and not ge and not gr) {
-						maneuvring!(true)
+					maneuvring!(not dc and not ge and not gr);
+					if (not dc and not ge and not gr) { -- on n'a qu'un seul état à la fois
+						locked_down!(false);
+						error!(false)
+					}
+					end if
+				};
+				
+				-- reveillé si porte fermée, roue retractée, on n'est ni en maneuvring ni en locked_down
+				s0-[on dispatch door_closed or gear_retracted]->s0 {
+					door_closed?(dc);
+					gear_retracted?(gr);
+					if (dc and gr) { -- on n'a qu'un seul état à la fois
+						locked_down!(false);
+						maneuvring!(false);
+						error!(false)
 					}
 					end if
 				};
