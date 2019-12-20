@@ -157,5 +157,8 @@ public
 
 	bus dp_to_ev_bus
 	end dp_to_ev_bus;
+
+	thread implementation pilote_interface_thread.pilote_interface
+	end pilote_interface_thread.pilote_interface;
 	
 end gears_system;
