@@ -236,10 +236,10 @@ public
 
 	thread implementation pilote_interface_thread.pilote_interface
 		subcomponents
-			v: data Base_Types::Boolean {Data_Model::Initial_Value=>("false");};
-			dc: data Base_Types::Boolean {Data_Model::Initial_Value=>("false");};
-			ge: data Base_Types::Boolean {Data_Model::Initial_Value=>("false");};
-			gr: data Base_Types::Boolean {Data_Model::Initial_Value=>("false");};
+			v: data Boolean {Data_Model::Initial_Value=>("false");};
+			dc: data Boolean {Data_Model::Initial_Value=>("false");};
+			ge: data Boolean {Data_Model::Initial_Value=>("false");};
+			gr: data Boolean {Data_Model::Initial_Value=>("false");};
 		annex behavior_specification {**
 			states
 				s0: initial complete state;
