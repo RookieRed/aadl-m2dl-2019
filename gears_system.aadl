@@ -66,9 +66,9 @@ public
 	-- Thread pilote interface
 	thread pilote_interface_thread
 		features
-			maneuvring: out data port Boolean;
-			locked_down: out data port Boolean;
-			error: out data port Boolean;
+			maneuvring: out event data port Boolean;
+			locked_down: out event data port Boolean;
+			error: out event data port Boolean;
 			door_closed: in event data port Boolean;
 			door_openned: in event data port Boolean;
 			gear_extended: in event data port Boolean;
@@ -182,7 +182,7 @@ public
 				s0-[on dispatch gear_extended]->s0 {
 					gear_extended?(v);
 					if (v) {
-						locked_down := true
+						locked_down!(true)
 					}
 					end if
 				};
@@ -194,7 +194,7 @@ public
 					gear_retracted?(gr);
 					
 					if (not dc and not ge and not gr) {
-						maneuvring := true
+						maneuvring!(true)
 					}
 					end if
 				};
