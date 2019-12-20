@@ -23,6 +23,7 @@ public
 			Data_Model::Enumerators => ("up", "down");
 	end handle.imp;
 
+	-- Global Digital part system
 	system digital_part
 		features
 			general_EV: out data port Boolean;
@@ -53,28 +54,16 @@ public
 			digital_part_dp1_new_connection2: bus access dp_mem.mbus <-> mbdp;
 	end digital_part.dp1;
 
-	device electro_valve
-		features
-			hydrolic_in: requires bus access hydrolic_bus;
-			hydrolic_out: requires bus access hydrolic_bus;
-			dp_orders: in data port;
-	end electro_valve;
+	process dp_software
+	end dp_software;
+	
+	process implementation dp_software.dps
+		subcomponents
+			pit: thread pilote_interface_thread;
+			gmt: thread gears_manager_thread;
+	end dp_software.dps;
 
-	device implementation electro_valve.general_EV
-	end electro_valve.general_EV;
-
-	device implementation electro_valve.close_EV
-	end electro_valve.close_EV;
-
-	device implementation electro_valve.retract_EV
-	end electro_valve.retract_EV;
-
-	device implementation electro_valve.extend_EV
-	end electro_valve.extend_EV;
-
-	device implementation electro_valve.open_EV
-	end electro_valve.open_EV;
-
+	-- Thread pilote interface
 	thread pilote_interface_thread
 		features
 			maneuvring: out data port Boolean;
@@ -96,9 +85,7 @@ public
 			gear_shock_absorb: in event data port shock_absorber.imp;
 	end gears_manager_thread;
 
-	process dp_software
-	end dp_software;
-
+	-- Devices
 	device pilote_interface
 		features
 			maneuvring: in data port Boolean;
@@ -134,11 +121,6 @@ public
 	device implementation descret_sensor.gear_shock_sensor
 	end descret_sensor.gear_shock_sensor;
 
-	process implementation dp_software.dps
-		subcomponents
-			pit: thread pilote_interface_thread;
-	end dp_software.dps;
-
 	memory dp_RAM
 		features
 			mbus: requires bus access mem_bus;
@@ -149,6 +131,7 @@ public
 			mbus: requires bus access mem_bus;
 	end dp_processor;
 
+	-- Buses
 	bus mem_bus
 	end mem_bus;
 
@@ -157,6 +140,29 @@ public
 
 	bus dp_to_ev_bus
 	end dp_to_ev_bus;
+
+	-- Electro valves
+	device electro_valve
+		features
+			hydrolic_in: requires bus access hydrolic_bus;
+			hydrolic_out: requires bus access hydrolic_bus;
+			dp_orders: in data port;
+	end electro_valve;
+
+	device implementation electro_valve.general_EV
+	end electro_valve.general_EV;
+
+	device implementation electro_valve.close_EV
+	end electro_valve.close_EV;
+
+	device implementation electro_valve.retract_EV
+	end electro_valve.retract_EV;
+
+	device implementation electro_valve.extend_EV
+	end electro_valve.extend_EV;
+
+	device implementation electro_valve.open_EV
+	end electro_valve.open_EV;
 
 	thread implementation pilote_interface_thread.pilote_interface
 	end pilote_interface_thread.pilote_interface;
