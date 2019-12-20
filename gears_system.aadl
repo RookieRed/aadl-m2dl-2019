@@ -1,24 +1,45 @@
 package gears_system
 public
+	-- Data types
 	with Base_Types;
-	Base_Types_Boolean renames data Base_Types::Boolean;
+	with Data_Model;
+	Boolean renames data Base_Types::Boolean;
+	Integer renames data Base_Types::Integer;
+	
+	-- Custom data types
+	data shock_absorber
+	end shock_absorber;
+	data implementation shock_absorber.imp
+		properties
+			Data_Model::Data_Representation => enum;
+			Data_Model::Enumerators => ("vol", "sol");
+	end shock_absorber.imp;
+	
+	data handle
+	end handle;
+	data implementation handle.imp
+		properties
+			Data_Model::Data_Representation => enum;
+			Data_Model::Enumerators => ("up", "down");
+	end handle.imp;
 
 	system digital_part
 		features
-			general_EV: out data port;
-			open_EV: out data port;
-			close_EV: out data port;
-			rectract_EV: out data port;
-			extend_EV: out data port;
-			handle: in data port;
-			maneuvring: out data port;
-			locked_down: out data port;
-			error: out data port;
-			door_closed: in event data port;
-			door_openned: in event data port;
-			gear_extended: in event data port;
-			gear_retracted: in event data port;
-			gear_shock_absorb: in event data port;
+			general_EV: out data port Boolean;
+			open_EV: out data port Boolean;
+			close_EV: out data port Boolean;
+			rectract_EV: out data port Boolean;
+			extend_EV: out data port Boolean;
+			handle: in data port handle.imp;
+			state: in data port handle.imp;
+			maneuvring: out data port Boolean;
+			locked_down: out data port Boolean;
+			error: out data port Boolean;
+			door_closed: in event data port Boolean;
+			door_openned: in event data port Boolean;
+			gear_extended: in event data port Boolean;
+			gear_retracted: in event data port Boolean;
+			gear_shock_absorb: in event data port shock_absorber.imp;
 	end digital_part;
 
 	system implementation digital_part.dp1
@@ -56,29 +77,38 @@ public
 
 	thread pilote_interface_thread
 		features
-			maneuvring: out data port Base_Types::Boolean;
-			locked_down: out data port Base_Types::Boolean;
-			error: out data port;
-			door_closed: in event data port;
-			door_openned: in event data port;
-			gear_extended: in event data port;
-			gear_retracted: in event data port;
-			gear_shock_absorb: in event data port;
+			maneuvring: out data port Boolean;
+			locked_down: out data port Boolean;
+			error: out data port Boolean;
+			door_closed: in event data port Boolean;
+			door_openned: in event data port Boolean;
+			gear_extended: in event data port Boolean;
+			gear_retracted: in event data port Boolean;
+			gear_shock_absorb: in event data port shock_absorber.imp;
 	end pilote_interface_thread;
+
+	thread gears_manager_thread
+		features
+			door_closed: in event data port Boolean;
+			door_openned: in event data port Boolean;
+			gear_extended: in event data port Boolean;
+			gear_retracted: in event data port Boolean;
+			gear_shock_absorb: in event data port shock_absorber.imp;
+	end gears_manager_thread;
 
 	process dp_software
 	end dp_software;
 
 	device pilote_interface
 		features
-			maneuvring: in data port;
-			locked_down: in data port;
-			error: in data port;
+			maneuvring: in data port Boolean;
+			locked_down: in data port Boolean;
+			error: in data port Boolean;
 	end pilote_interface;
 
 	device pilot_command
 		features
-			handle: out event data port;
+			handle: out event data port handle.imp;
 	end pilot_command;
 
 	device analogical_switch
