@@ -284,4 +284,118 @@ public
 	device implementation electro_valve.open_EV
 	end electro_valve.open_EV;
 	
+	thread anomaly_EV
+		features
+			error: out data port Base_Types::Boolean;
+			general_EV: in event data port;
+			maneuvring: in event data port;
+		properties
+			Dispatch_Protocol => Timed;
+			Period => 200ms;
+	end anomaly_EV;
+
+	thread implementation anomaly_EV.impl
+		annex behavior_specification {**
+          states
+            init : initial complete state;
+            wait : complete state;
+            error_state : state;
+          transitions
+            init -[on dispatch general_EV]-> wait;
+            wait -[on dispatch maneuvring]-> init {
+              error ! (false)
+            };
+            wait -[on dispatch timeout ]-> error_state {
+              error ! (true)
+            };
+        **};
+	end anomaly_EV.impl;
+	
+	thread anomaly_EV_stop
+		features
+			error: out data port Base_Types::Boolean;
+			general_EV: in event data port;
+			maneuvring: in event data port;
+		properties
+			Dispatch_Protocol => Timed;
+			Period => 1000ms;
+	end anomaly_EV_stop;
+
+	thread implementation anomaly_EV_stop.impl
+		annex behavior_specification {**
+          states
+            init : initial complete state;
+            wait : complete state;
+            error_state : state;
+          transitions
+            init -[on dispatch general_EV ]-> wait;
+            wait -[on dispatch maneuvring]-> init {
+            	if (general_EV? = false and maneuvring? = false)
+              		error ! (true)
+              	else 
+              		error ! (false)
+              	end if
+            };
+            wait -[on dispatch timeout ]-> error_state {
+              error ! (true)
+            };
+        **};
+	end anomaly_EV_stop.impl;
+	
+	
+	
+	thread anomaly_move_door
+		features
+			error: out data port Base_Types::Boolean;
+			door_openned: in event data port;
+			door_closed: in event data port;
+		properties
+			Dispatch_Protocol => Timed;
+			Period => 100ms;
+	end anomaly_move_door;
+
+	thread implementation anomaly_move_door.impl
+		annex behavior_specification {**
+          states
+            init : initial complete state;
+            wait : complete state;
+            error_state : state;
+          transitions
+            init -[on dispatch door_openned]-> wait;
+            wait -[on dispatch door_closed]-> init {
+              error ! (false)
+            };
+            wait -[on dispatch timeout ]-> error_state {
+              error ! (true)
+            };
+        **};
+	end anomaly_move_door.impl;
+	
+	thread anomaly_move_gear
+		features
+			error: out data port Base_Types::Boolean;
+			gear_extended: in event data port;
+			gear_retracted: in event data port;
+		properties
+			Dispatch_Protocol => Timed;
+			Period => 100ms;
+	end anomaly_move_gear;
+
+	thread implementation anomaly_move_gear.impl
+		annex behavior_specification {**
+          states
+            init : initial complete state;
+            wait : complete state;
+            error_state : state;
+          transitions
+            init -[on dispatch gear_extended]-> wait;
+            wait -[on dispatch gear_retracted]-> init {
+              error ! (false)
+            };
+            wait -[on dispatch timeout ]-> error_state {
+              error ! (true)
+            };
+        **};
+	end anomaly_move_gear.impl;
+	
 end gears_system;
